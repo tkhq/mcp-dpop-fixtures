@@ -1,0 +1,12 @@
+$ bun test test/
+bun test v1.4.0 (34cbb9a40)
+
+test/ducktype.test.ts:
+  DpopSession.create({ keyPair: { privateKey: <remote> } }).buildProof() -> TypeError: Key for the ES256 algorithm must be one of type CryptoKey, KeyObject, or JSON Web Key. Received an instance of Object
+  methods the SDK called on the session object: buildProof, observeNonce
+
+ 41 pass
+ 0 fail
+ 59 expect() calls
+Ran 41 tests across 4 files. [104.00ms]
+(exit 0)

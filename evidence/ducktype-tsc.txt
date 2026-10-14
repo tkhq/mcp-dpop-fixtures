@@ -1,0 +1,11 @@
+$ tsc --noEmit -p probes/tsconfig.json   # bun run probe:types; expected to fail
+probes/ducktype.ts(12,7): error TS2741: Property 'keyPair' is missing in type 'ExternalSignerDpopSession' but required in type 'DpopSession'.
+probes/ducktype.ts(15,12): error TS2352: Conversion of type 'ExternalSignerDpopSession' to type 'DpopSession' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'keyPair' is missing in type 'ExternalSignerDpopSession' but required in type 'DpopSession'.
+probes/ducktype.ts(18,49): error TS2322: Type '() => ExternalSignerDpopSession' is not assignable to type '() => DpopSession | Promise<DpopSession | undefined> | undefined'.
+  Type 'ExternalSignerDpopSession' is not assignable to type 'DpopSession | Promise<DpopSession | undefined> | undefined'.
+    Property 'keyPair' is missing in type 'ExternalSignerDpopSession' but required in type 'DpopSession'.
+probes/ducktype.ts(21,12): error TS2673: Constructor of class 'DpopSession' is private and only accessible within the class declaration.
+probes/ducktype.ts(24,18): error TS2675: Cannot extend a class 'DpopSession'. Class constructor is marked as private.
+probes/ducktype.ts(33,57): error TS2739: Type '{ sign: (_input: string) => Promise<Uint8Array<ArrayBuffer>>; }' is missing the following properties from type 'CryptoKey': algorithm, extractable, type, usages
+(exit 2)

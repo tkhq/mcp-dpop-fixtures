@@ -1,0 +1,11 @@
+$ bun scripts/bench.ts
+
+callTool latency, N=25 per variant (ms; warm-up excluded; nearest-rank percentiles)
+mock remote signer delay: 230 ms per signature
+variant                p50      p95      min      max      mean     sign p50  sign p95
+sdk-webcrypto          1.1      1.8      0.8      2.9      1.1      -        -        
+external-local         0.7      0.8      0.6      0.9      0.7      0        0        
+external-mock-remote   237.3    244.3    232.7    247.6    237.4    231.6    237.1    
+
+wrote evidence/bench.json
+(exit 0)

@@ -1,0 +1,113 @@
+$ bun scripts/roundtrip.ts
+
+=== A. PR #2630 requireDpopAuth, no nonces ===
+AS http://localhost:50062  RS http://localhost:50065/mcp  key jkt=DG8ZtDOkjXeqDbNCglNkUgjspgNbkkBr43FxC-_Dvkg
+
+--- HTTP trace ---
+#1 POST http://localhost:50065/mcp -> 401 (1 ms)
+    WWW-Authenticate: DPoP error="invalid_token", error_description="Missing Authorization header", scope="mcp", resource_metadata="http://localhost:50065/.well-known/oauth-protected-resource/mcp", algs="ES256 ES384 ES512 RS256 RS384 RS512 PS256 PS384 PS512 EdDSA"
+    body: {"error":"invalid_token","error_description":"Missing Authorization header"}
+#2 GET http://localhost:50065/.well-known/oauth-protected-resource/mcp -> 200 (0 ms)
+#3 GET http://localhost:50062/.well-known/oauth-authorization-server -> 200 (0 ms)
+#4 POST http://localhost:50062/token -> 200 auth=Basic (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50062/token iat=1792001828 jti=Hho68-_e... ath=(none)
+#5 POST http://localhost:50065/mcp -> 200 auth=DPoP (6 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50065/mcp iat=1792001828 jti=uJvAz5Cg... ath=zl6gzykqCS...
+#6 POST http://localhost:50065/mcp -> 202 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50065/mcp iat=1792001828 jti=yhq9VRWk... ath=zl6gzykqCS...
+#7 GET http://localhost:50065/mcp -> 405 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=GET htu=http://localhost:50065/mcp iat=1792001828 jti=r567hIsJ... ath=zl6gzykqCS...
+    body: {"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}
+#8 POST http://localhost:50065/mcp -> 200 auth=DPoP (3 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50065/mcp iat=1792001828 jti=j8ITwhRZ... ath=zl6gzykqCS...
+#9 POST http://localhost:50065/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50065/mcp iat=1792001828 jti=bgQSsj1N... ath=zl6gzykqCS...
+#10 POST http://localhost:50065/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50065/mcp iat=1792001828 jti=aTzIU7AN... ath=zl6gzykqCS...
+
+tool results:
+  echo: one (client=fixture-client, cnf.jkt=DG8ZtDOkjXeqDbNCglNkUgjspgNbkkBr43FxC-_Dvkg)
+  echo: two (client=fixture-client, cnf.jkt=DG8ZtDOkjXeqDbNCglNkUgjspgNbkkBr43FxC-_Dvkg)
+  echo: three (client=fixture-client, cnf.jkt=DG8ZtDOkjXeqDbNCglNkUgjspgNbkkBr43FxC-_Dvkg)
+PASS  token request carried a DPoP proof with htm=POST, htu=token endpoint, no ath
+PASS  AS bound the token to the client key (cnf.jkt == session.thumbprint)
+PASS  every MCP request after the token used Authorization: DPoP + proof with ath (6 requests)
+PASS  every proof had a unique jti
+PASS  no DPoP MCP request was refused by the gate (no 401/403)
+PASS  echo tool saw the bound key
+MCP HTTP requests with a proof: 6 = connect (initialize POST, initialized POST, GET stream) + 3 callTool POSTs; one signature each
+
+=== B. PR #2630 requireDpopAuth with a server nonce (RFC 9449 §9) ===
+
+--- HTTP trace ---
+#1 POST http://localhost:50073/mcp -> 401 (1 ms)
+    WWW-Authenticate: DPoP error="invalid_token", error_description="Missing Authorization header", scope="mcp", resource_metadata="http://localhost:50073/.well-known/oauth-protected-resource/mcp", algs="ES256 ES384 ES512 RS256 RS384 RS512 PS256 PS384 PS512 EdDSA"
+    body: {"error":"invalid_token","error_description":"Missing Authorization header"}
+#2 GET http://localhost:50073/.well-known/oauth-protected-resource/mcp -> 200 (0 ms)
+#3 GET http://localhost:50070/.well-known/oauth-authorization-server -> 200 (0 ms)
+#4 POST http://localhost:50070/token -> 200 auth=Basic (0 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50070/token iat=1792001828 jti=CktW_84O... ath=(none)
+#5 POST http://localhost:50073/mcp -> 401 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50073/mcp iat=1792001828 jti=12wgS2ec... ath=ckqfousd0z...
+    WWW-Authenticate: DPoP error="use_dpop_nonce", error_description="a fresh server-provided nonce is required", scope="mcp", resource_metadata="http://localhost:50073/.well-known/oauth-protected-resource/mcp", algs="ES256 ES384 ES512 RS256 RS384 RS512 PS256 PS384 PS512 EdDSA"
+    DPoP-Nonce: HujRyCacHPeN66ugSc0wgA
+    body: {"error":"use_dpop_nonce","error_description":"a fresh server-provided nonce is required"}
+#6 POST http://localhost:50073/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50073/mcp iat=1792001828 jti=ij7RyfzI... ath=ckqfousd0z... nonce=HujRyCacHPeN66ugSc0wgA
+#7 POST http://localhost:50073/mcp -> 202 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50073/mcp iat=1792001828 jti=xlUiR7AK... ath=ckqfousd0z... nonce=HujRyCacHPeN66ugSc0wgA
+#8 GET http://localhost:50073/mcp -> 405 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=GET htu=http://localhost:50073/mcp iat=1792001828 jti=Od1aEGQi... ath=ckqfousd0z... nonce=HujRyCacHPeN66ugSc0wgA
+    body: {"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}
+#9 POST http://localhost:50073/mcp -> 200 auth=DPoP (2 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50073/mcp iat=1792001828 jti=5_eixhBa... ath=ckqfousd0z... nonce=HujRyCacHPeN66ugSc0wgA
+#10 POST http://localhost:50073/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50073/mcp iat=1792001828 jti=46AoUxRA... ath=ckqfousd0z... nonce=HujRyCacHPeN66ugSc0wgA
+
+tool results:
+  echo: nonce-1 (client=fixture-client, cnf.jkt=VpkBCV5soIVwQvZdUDC2AdJm3YQk3dtenjJsy3ymt7Q)
+  echo: nonce-2 (client=fixture-client, cnf.jkt=VpkBCV5soIVwQvZdUDC2AdJm3YQk3dtenjJsy3ymt7Q)
+PASS  RS answered 401 use_dpop_nonce with a DPoP-Nonce header
+PASS  client retried once with the nonce in a fresh proof (new jti)
+PASS  only one nonce challenge in the whole session (nonce remembered per origin)
+RS nonce stats: {"issued":1,"verified":5,"rejected":1}
+
+=== C. AS nonce at the token endpoint (RFC 9449 §8) ===
+
+--- HTTP trace ---
+#1 POST http://localhost:50081/mcp -> 401 (1 ms)
+    WWW-Authenticate: DPoP error="invalid_token", error_description="Missing Authorization header", scope="mcp", resource_metadata="http://localhost:50081/.well-known/oauth-protected-resource/mcp", algs="ES256 ES384 ES512 RS256 RS384 RS512 PS256 PS384 PS512 EdDSA"
+    body: {"error":"invalid_token","error_description":"Missing Authorization header"}
+#2 GET http://localhost:50081/.well-known/oauth-protected-resource/mcp -> 200 (0 ms)
+#3 GET http://localhost:50078/.well-known/oauth-authorization-server -> 200 (0 ms)
+#4 POST http://localhost:50078/token -> 400 auth=Basic (0 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50078/token iat=1792001828 jti=lBHsPVyR... ath=(none)
+    DPoP-Nonce: YyfL9cRdFWIiQ9UDfG4zjQ
+    body: {"error":"use_dpop_nonce","error_description":"AS requires a nonce in the DPoP proof"}
+#5 POST http://localhost:50078/token -> 200 auth=Basic (0 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50078/token iat=1792001828 jti=uJ41xnq4... ath=(none) nonce=YyfL9cRdFWIiQ9UDfG4zjQ
+    DPoP-Nonce: hOGi6gxsCMkJLF1YZgRAtQ
+#6 POST http://localhost:50081/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50081/mcp iat=1792001828 jti=CHVOGvcQ... ath=0QFJ4njc1s...
+#7 POST http://localhost:50081/mcp -> 202 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50081/mcp iat=1792001828 jti=o-krc5Um... ath=0QFJ4njc1s...
+#8 GET http://localhost:50081/mcp -> 405 auth=DPoP (0 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=GET htu=http://localhost:50081/mcp iat=1792001828 jti=udwa7Y6m... ath=0QFJ4njc1s...
+    body: {"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}
+#9 POST http://localhost:50081/mcp -> 200 auth=DPoP (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50081/mcp iat=1792001828 jti=RFczTh3t... ath=0QFJ4njc1s...
+
+tool result: echo: as-nonce (client=fixture-client, cnf.jkt=NxGZBc8tKO3NDDHqRw5TuqDogcqeKesiwGkj-RV58is)
+PASS  token endpoint answered 400 use_dpop_nonce, client retried once with the nonce
+PASS  AS nonce did not leak into RS proofs (separate per-origin slots)
+
+=== D. DPoP-bound token sent as Bearer ===
+PR requireDpopAuth, "Bearer <bound token>" + valid proof -> 401 DPoP error="invalid_token", error_description="Invalid Authorization header format, expected 'DPoP TOKEN'", scope="mcp", resource_metadata="http://localhost:50089/.well-known/oauth-protected-resource/mcp", algs="ES256 ES384 ES512 RS256 RS384 RS512 PS256 PS384 PS512 EdDSA"
+PASS  PR requireDpopAuth refuses the Bearer scheme
+PR requireBearerAuth, "Bearer <bound token>" -> 401 Bearer error="invalid_token", error_description="Token is DPoP-bound and must be presented with the DPoP scheme, not Bearer", scope="mcp", resource_metadata="http://localhost:50090/.well-known/oauth-protected-resource/mcp"
+PASS  PR requireBearerAuth refuses a token with cnf.jkt (RFC 9449 §7.2)
+PR requireBearerAuth, "Bearer <unbound token>" -> 200
+PASS  PR requireBearerAuth still accepts an unbound token
+
+ALL CHECKS PASSED
+(exit 0)

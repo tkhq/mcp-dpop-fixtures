@@ -1,0 +1,26 @@
+{
+  "name": "mcp-dpop-fixtures",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "description": "Fixtures for DPoP (RFC 9449) with the MCP TypeScript SDK: a stub AS and RS, a baseline against 2.3.1, a round trip and negative tests against PR #2630, and an external-signer adapter",
+  "scripts": {
+    "baseline": "bun scripts/baseline.ts",
+    "roundtrip": "bun scripts/roundtrip.ts",
+    "bench": "bun scripts/bench.ts",
+    "typecheck": "tsc --noEmit",
+    "probe:types": "tsc --noEmit -p probes/tsconfig.json",
+    "test": "bun test test/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/server": "2.3.1",
+    "jose": "6.1.3",
+    "mcp-server-pr2630": "https://pkg.pr.new/@modelcontextprotocol/server@2630",
+    "zod": "4.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "typescript": "5.9.3"
+  }
+}

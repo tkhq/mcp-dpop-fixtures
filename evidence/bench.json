@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-14T18:17:16.388Z",
+  "n": 25,
+  "mockSignerDelayMs": 230,
+  "rows": [
+    {
+      "variant": "sdk-webcrypto",
+      "n": 25,
+      "p50": 1.1,
+      "p95": 1.8,
+      "min": 0.8,
+      "max": 2.9,
+      "mean": 1.1
+    },
+    {
+      "variant": "external-local",
+      "n": 25,
+      "p50": 0.7,
+      "p95": 0.8,
+      "min": 0.6,
+      "max": 0.9,
+      "mean": 0.7,
+      "signP50": 0,
+      "signP95": 0
+    },
+    {
+      "variant": "external-mock-remote",
+      "n": 25,
+      "p50": 237.3,
+      "p95": 244.3,
+      "min": 232.7,
+      "max": 247.6,
+      "mean": 237.4,
+      "signP50": 231.6,
+      "signP95": 237.1
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+$ bun scripts/baseline.ts
+AS http://localhost:50056  RS http://localhost:50059/mcp  gate=stock 2.3.1 requireBearerAuth
+client DPoP key thumbprint jd85sBMFceYvX5hmEac_9H5hl85Vt97SZ-iGW70ur80
+
+--- HTTP trace (2.3.1 client with dpop() -> stock requireBearerAuth) ---
+#1 POST http://localhost:50059/mcp -> 401 (1 ms)
+    WWW-Authenticate: Bearer error="invalid_token", error_description="Missing Authorization header", scope="mcp", resource_metadata="http://localhost:50059/.well-known/oauth-protected-resource/mcp"
+    body: {"error":"invalid_token","error_description":"Missing Authorization header"}
+#2 GET http://localhost:50059/.well-known/oauth-protected-resource/mcp -> 200 (0 ms)
+#3 GET http://localhost:50056/.well-known/oauth-authorization-server -> 200 (0 ms)
+#4 POST http://localhost:50056/token -> 200 auth=Basic (1 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50056/token iat=1792001828 jti=LX58jG2y... ath=(none)
+#5 POST http://localhost:50059/mcp -> 401 auth=DPoP (0 ms)
+    proof: typ=dpop+jwt alg=ES256 htm=POST htu=http://localhost:50059/mcp iat=1792001828 jti=MDz2owPk... ath=8JVQSl4Q6o...
+    WWW-Authenticate: Bearer error="invalid_token", error_description="Invalid Authorization header format, expected 'Bearer TOKEN'", scope="mcp", resource_metadata="http://localhost:50059/.well-known/oauth-protected-resource/mcp"
+    body: {"error":"invalid_token","error_description":"Invalid Authorization header format, expected 'Bearer TOKEN'"}
+
+RESULT: SdkHttpError: Server returned 401 after re-authentication
+DPoP-scheme requests rejected by the stock gate: 1
+
+DPoP-bound token (cnf.jkt=jd85sBMFce...) sent as Bearer, no proof -> HTTP 200
+gate result: ACCEPTED (clientId=fixture-client)
+The stock gate cannot tell a bound token from a bearer token, so a stolen bound token works without the key.
+(exit 0)
